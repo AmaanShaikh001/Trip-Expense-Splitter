@@ -25,8 +25,11 @@ Example: (https://yourusername.github.io/trip-expense-splitter/)
 ## 📁 Project Structure
 
 trip-expense-splitter/
+
 ├── index.html # Main application HTML
+
 ├── html2canvas.min.js # Library to export settlements as image
+
 ├── README.md
 
 
