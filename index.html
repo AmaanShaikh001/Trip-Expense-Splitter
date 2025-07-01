@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trip Expense Splitter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="html2canvas.min.js"></script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    .list-item {
+      transition: all 0.3s ease;
+    }
+    .list-item:hover {
+      transform: translateX(5px);
+    }
+    .btn {
+      transition: transform 0.2s ease;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center p-4 font-sans">
+  <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-6 animate-fade-in">
+    <h1 class="text-2xl font-light text-gray-800 text-center mb-6">Trip Expense Splitter</h1>
+
+    <div class="mb-6">
+      <h2 class="text-lg font-medium text-gray-700 mb-3">Add Person</h2>
+      <div class="flex space-x-2">
+        <input id="personName" type="text" placeholder="Enter name" class="flex-1 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 transition">
+        <button onclick="addPerson()" class="btn bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600">Add</button>
+      </div>
+    </div>
+
+    <div id="peopleList" class="mb-6"></div>
+
+    <div class="mb-6">
+      <h2 class="text-lg font-medium text-gray-700 mb-3">Add Expense</h2>
+      <select id="expensePerson" class="w-full p-3 border border-gray-200 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-green-300 transition">
+        <option value="">Select person</option>
+      </select>
+      <input id="expenseAmount" type="number" placeholder="Amount spent" class="w-full p-3 border border-gray-200 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-green-300 transition">
+      <input id="expenseNote" type="text" placeholder="Note (e.g., Food)" class="w-full p-3 border border-gray-200 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-green-300 transition">
+      <button onclick="addExpense()" class="btn w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600">Add Expense</button>
+    </div>
+
+    <div id="expensesList" class="mb-6"></div>
+
+    <div id="summary" class="mb-6">
+      <h2 class="text-lg font-medium text-gray-700 mb-3">Summary</h2>
+      <p class="text-gray-600">Total Spent: ₹<span id="totalSpent">0</span></p>
+      <p class="text-gray-600">Per Person: ₹<span id="perPerson">0</span></p>
+    </div>
+
+    <div id="settlements" class="mb-6">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-lg font-medium text-gray-700">Settlements</h2>
+        <button onclick="exportSettlements()" class="btn bg-purple-500 text-white p-2 rounded-lg hover:bg-purple-600">Export as Image</button>
+      </div>
+      <div id="settlementsList" class="bg-gray-50 p-4 rounded-lg"></div>
+    </div>
+  </div>
+
+  <script>
+    let people = [];
+    let expenses = [];
+
+    function addPerson() {
+      const nameInput = document.getElementById('personName');
+      const name = nameInput.value.trim();
+      if (name && !people.includes(name)) {
+        people.push(name);
+        nameInput.value = '';
+        updatePeopleList();
+        updateExpensePersonDropdown();
+        calculateSummary();
+      }
+    }
+
+    function removePerson(name) {
+      people = people.filter(p => p !== name);
+      expenses = expenses.filter(e => e.person !== name);
+      updatePeopleList();
+      updateExpensePersonDropdown();
+      updateExpensesList();
+      calculateSummary();
+    }
+
+    function updatePeopleList() {
+      const peopleList = document.getElementById('peopleList');
+      if (people.length === 0) {
+        peopleList.innerHTML = '<p class="text-gray-500">No people added yet.</p>';
+        return;
+      }
+
+      peopleList.innerHTML = '<h3 class="font-medium text-gray-700 mb-2">People</h3><ul class="list-disc pl-5 space-y-1">' +
+        people.map(p => `<li class="list-item text-gray-600 flex justify-between items-center">
+          ${p} 
+          <button onclick="removePerson('${p}')" class="text-red-500 hover:text-red-700 text-sm ml-2">Remove</button>
+        </li>`).join('') +
+        '</ul>';
+    }
+
+    function updateExpensePersonDropdown() {
+      const dropdown = document.getElementById('expensePerson');
+      const current = dropdown.value;
+      dropdown.innerHTML = '<option value="">Select person</option>' +
+        people.map(p => `<option value="${p}">${p}</option>`).join('');
+      dropdown.value = current;
+    }
+
+    function addExpense() {
+      const person = document.getElementById('expensePerson').value;
+      const amount = parseFloat(document.getElementById('expenseAmount').value);
+      const note = document.getElementById('expenseNote').value.trim();
+      if (person && amount > 0) {
+        expenses.push({ person, amount, note });
+        document.getElementById('expenseAmount').value = '';
+        document.getElementById('expenseNote').value = '';
+        updateExpensesList();
+        calculateSummary();
+        // Do not clear the selected person
+        // Keep dropdown as-is
+      }
+    }
+
+    function updateExpensesList() {
+      const expensesList = document.getElementById('expensesList');
+      if (expenses.length === 0) {
+        expensesList.innerHTML = '<p class="text-gray-500">No expenses added yet.</p>';
+        return;
+      }
+
+      const summary = {};
+      expenses.forEach(e => {
+        summary[e.person] = (summary[e.person] || 0) + e.amount;
+      });
+
+      expensesList.innerHTML = '<h3 class="font-medium text-gray-700 mb-2">Total Spent per Person</h3>' +
+        '<ul class="list-disc pl-5 space-y-1">' +
+        Object.entries(summary).map(([name, total]) =>
+          `<li class="list-item text-gray-600">${name} spent ₹${total.toFixed(2)}</li>`).join('') +
+        '</ul>';
+    }
+
+    function calculateSummary() {
+      const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
+      const perPerson = people.length ? (totalSpent / people.length).toFixed(2) : 0;
+      document.getElementById('totalSpent').textContent = totalSpent.toFixed(2);
+      document.getElementById('perPerson').textContent = perPerson;
+      calculateSettlements(perPerson);
+    }
+
+    function calculateSettlements(perPerson) {
+      const balances = {};
+      people.forEach(p => balances[p] = 0);
+      expenses.forEach(e => balances[e.person] += e.amount);
+      people.forEach(p => balances[p] -= perPerson);
+
+      const settlements = [];
+      const debtors = [];
+      const creditors = [];
+
+      for (const person in balances) {
+        if (balances[person] < -0.01) {
+          debtors.push({ person, amount: -balances[person] });
+        } else if (balances[person] > 0.01) {
+          creditors.push({ person, amount: balances[person] });
+        }
+      }
+
+      debtors.forEach(debtor => {
+        let amountOwed = debtor.amount;
+        while (amountOwed > 0.01 && creditors.length) {
+          const creditor = creditors[0];
+          const amountToPay = Math.min(amountOwed, creditor.amount);
+          settlements.push(`${debtor.person} should pay ₹${amountToPay.toFixed(2)} to ${creditor.person}`);
+          amountOwed -= amountToPay;
+          creditor.amount -= amountToPay;
+          if (creditor.amount < 0.01) creditors.shift();
+        }
+      });
+
+      const settlementsList = document.getElementById('settlementsList');
+      settlementsList.innerHTML = settlements.length ?
+        `<ul class="list-disc pl-5 space-y-1">${settlements.map(s => `<li class="list-item text-gray-600">${s}</li>`).join('')}</ul>` :
+        '<p class="text-gray-500">No settlements needed.</p>';
+    }
+
+    function exportSettlements() {
+      const settlementsDiv = document.getElementById('settlements');
+      html2canvas(settlementsDiv, { backgroundColor: '#f9fafb' }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'settlements.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>
