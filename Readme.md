@@ -10,7 +10,7 @@ This is a simple and elegant web application to split trip expenses among friend
 - Log multiple expenses per person.
 - Shows total spent per person (summed up).
 - Calculates per-person share and settlements.
-- Export settlement summary as an image.
+- Export **styled summary card** (includes expenses, summary, and settlements) as an image.
 - Built with vanilla JavaScript and Tailwind CSS.
 - Supports INR currency.
 
@@ -18,11 +18,13 @@ This is a simple and elegant web application to split trip expenses among friend
 
 ## 🖥️ Live Demo
 
-You can host this app using **GitHub Pages** or any static site host. 
+You can host this app using **GitHub Pages** or any static site host.  
 Example: (https://yourusername.github.io/trip-expense-splitter/)
 
+---
 
 ## 📁 Project Structure
+
 
 trip-expense-splitter/
 
@@ -31,6 +33,7 @@ trip-expense-splitter/
 ├── html2canvas.min.js # Library to export settlements as image
 
 ├── README.md
+
 
 
 ---
@@ -42,10 +45,10 @@ trip-expense-splitter/
 3. Select a person, enter the amount they spent, and click **"Add Expense"**.
    - The person remains selected for quick multiple entries.
 4. Scroll down to view:
-   - Total spent
-   - Per person share
-   - Settlement breakdown
-5. Click **"Export as Image"** to download the settlement summary.
+   - **Total spent per person**
+   - **Summary (total spent + per person share)**
+   - **Settlement breakdown**
+5. Click **"Export as Image"** to download a **styled summary card** that includes all the above.
 
 ---
 
@@ -56,7 +59,6 @@ trip-expense-splitter/
 3. Go to `Settings > Pages`, and set the source to your `main` branch.
 4. Your app will be live at:
 https://<your-username>.github.io/<repo-name>/
-
 
 ---
 
@@ -76,5 +78,5 @@ Feel free to use and modify for personal or commercial use.
 
 ## 🙌 Author
 
-Built with ❤️ by Amaan Shaikh 
+Built with ❤️ by Amaan Shaikh  
 GitHub: https://github.com/AmaanShaikh001
